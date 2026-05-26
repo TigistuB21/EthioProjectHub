@@ -1,0 +1,82 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String            @id @default(uuid())
+  email         String            @unique
+  passwordHash  String
+  fullName      String
+  role          String            @default("STUDENT") // "STUDENT", "ADVISOR", "ADMIN"
+  departmentId  String?
+  department    Department?       @relation(fields: [departmentId], references: [id])
+  
+  // Projects uploaded by this user
+  uploadedProjects Project[]      @relation("ProjectUploader")
+  
+  // Projects reviewed by this user (Advisors/Admins)
+  reviewedProjects ProjectApproval[]
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model Department {
+  id        String    @id @default(uuid())
+  name      String    @unique // e.g., "Computer Science", "Electrical Engineering"
+  code      String    @unique // e.g., "CoSc", "ECE"
+  users     User[]
+  projects  Project[]
+}
+
+model Project {
+  id             String            @id @default(uuid())
+  title          String
+  abstract       String
+  year           Int
+  pdfUrl         String            // Local path or S3 URL
+  teamMembers    String            // Comma-separated list or JSON string of team members
+  status         String            @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  summary        String?
+
+  
+  // Relationships
+  departmentId   String
+  department     Department        @relation(fields: [departmentId], references: [id])
+  
+  uploaderId     String
+  uploader       User              @relation("ProjectUploader", fields: [uploaderId], references: [id])
+  
+  // Keywords/Tags
+  tags           Tag[]
+  
+  // Approval history
+  approvals      ProjectApproval[]
+  
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique // e.g., "Machine Learning", "IoT", "Agriculture"
+  projects Project[]
+}
+
+model ProjectApproval {
+  id         String   @id @default(uuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  reviewerId String
+  reviewer   User     @relation(fields: [reviewerId], references: [id])
+  
+  status     String   // "APPROVED", "REJECTED"
+  feedback   String?  // Reasons for rejection or approval notes
+  
+  createdAt  DateTime @default(now())
+}

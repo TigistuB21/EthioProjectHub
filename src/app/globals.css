@@ -1,0 +1,391 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Color Tokens - Light Mode */
+  --primary: 142 72% 29%;      /* Ethiopian Deep Emerald Green */
+  --primary-light: 142 60% 45%;
+  --primary-dark: 142 75% 20%;
+  
+  --secondary: 45 93% 47%;     /* Ethiopian Warm Metallic Gold */
+  --secondary-light: 45 95% 58%;
+  --secondary-dark: 45 90% 35%;
+  
+  --accent: 0 84% 60%;         /* Dynamic Red/Crimson Accent */
+  
+  --background: 210 20% 98%;   /* Soft Slate Off-White */
+  --bg-card: 0 0% 100%;        /* Pure White */
+  --bg-glass: 255 255 255 / 75%;
+  
+  --text-primary: 222 47% 11%;   /* Deep Slate */
+  --text-secondary: 215 16% 47%; /* Medium Gray */
+  --text-muted: 215 16% 70%;
+  
+  --border: 214 32% 91%;
+  --border-focus: 142 72% 29% / 50%;
+  --ring: 142 72% 29%;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Color Tokens - Dark Mode */
+    --primary: 142 69% 40%;      /* Lighter, glowing Emerald */
+    --primary-light: 142 60% 55%;
+    --primary-dark: 142 75% 25%;
+    
+    --secondary: 45 93% 52%;     /* Bright Ethiopian Gold */
+    --secondary-light: 45 95% 65%;
+    --secondary-dark: 45 90% 40%;
+    
+    --accent: 0 84% 65%;
+    
+    --background: 222 47% 6%;    /* Deep Space Navy */
+    --bg-card: 222 47% 10%;      /* Darker Slate Card */
+    --bg-glass: 15 23 42 / 65%;
+    
+    --text-primary: 210 20% 98%;   /* Soft White */
+    --text-secondary: 215 20% 75%; /* Soft Gray */
+    --text-muted: 215 16% 50%;
+    
+    --border: 217 22% 19%;
+    --border-focus: 142 69% 40% / 60%;
+    --ring: 142 69% 40%;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Explicit data-theme dark overrides */
+[data-theme='dark'] {
+  --primary: 142 69% 40%;
+  --primary-light: 142 60% 55%;
+  --primary-dark: 142 75% 25%;
+  
+  --secondary: 45 93% 52%;
+  --secondary-light: 45 95% 65%;
+  --secondary-dark: 45 90% 40%;
+  
+  --accent: 0 84% 65%;
+  
+  --background: 222 47% 6%;
+  --bg-card: 222 47% 10%;
+  --bg-glass: 15 23 42 / 65%;
+  
+  --text-primary: 210 20% 98%;
+  --text-secondary: 215 20% 75%;
+  --text-muted: 215 16% 50%;
+  
+  --border: 217 22% 19%;
+  --border-focus: 142 69% 40% / 60%;
+  --ring: 142 69% 40%;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='light'] {
+  --primary: 142 72% 29%;
+  --primary-light: 142 60% 45%;
+  --primary-dark: 142 75% 20%;
+  
+  --secondary: 45 93% 47%;
+  --secondary-light: 45 95% 58%;
+  --secondary-dark: 45 90% 35%;
+  
+  --accent: 0 84% 60%;
+  
+  --background: 210 20% 98%;
+  --bg-card: 0 0% 100%;
+  --bg-glass: 255 255 255 / 75%;
+  
+  --text-primary: 222 47% 11%;
+  --text-secondary: 215 16% 47%;
+  --text-muted: 215 16% 70%;
+  
+  --border: 214 32% 91%;
+  --border-focus: 142 72% 29% / 50%;
+  --ring: 142 72% 29%;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--text-primary));
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  scroll-behavior: smooth;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: hsl(var(--text-primary));
+  line-height: 1.25;
+  margin-bottom: 0.5em;
+}
+
+p {
+  margin-bottom: 1em;
+  color: hsl(var(--text-secondary));
+}
+
+a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+a:hover {
+  color: hsl(var(--primary-light));
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: var(--radius-lg);
+  border: 2px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--text-muted));
+}
+
+/* Premium Layout & Glassmorphism Utilities */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.glass-card {
+  background: rgba(var(--bg-glass));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 50%);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-glass);
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: hsl(var(--primary) / 30%);
+}
+
+.glass-panel {
+  background: rgba(var(--bg-glass));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid hsl(var(--border) / 40%);
+  border-radius: var(--radius-lg);
+}
+
+/* Inputs & Form Fields */
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--text-primary));
+  font-family: 'Outfit', sans-serif;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background-color: hsl(var(--bg-card));
+  color: hsl(var(--text-primary));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--border-focus));
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23718096'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25rem;
+}
+
+/* Buttons System */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+  color: white;
+  box-shadow: 0 4px 14px 0 hsl(var(--primary) / 30%);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 hsl(var(--primary) / 45%);
+  filter: brightness(1.1);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: hsl(var(--bg-card));
+  color: hsl(var(--text-primary));
+  border-color: hsl(var(--border));
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: hsl(var(--background));
+  border-color: hsl(var(--text-muted));
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary-dark)) 100%);
+  color: hsl(var(--text-primary));
+  border: 1px solid hsl(var(--secondary-light) / 30%);
+  box-shadow: 0 4px 14px 0 hsl(var(--secondary) / 20%);
+}
+
+.btn-accent:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 hsl(var(--secondary) / 35%);
+  filter: brightness(1.05);
+}
+
+.btn-danger {
+  background-color: hsl(var(--accent));
+  color: white;
+  box-shadow: 0 4px 14px 0 hsl(var(--accent) / 20%);
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 0 6px 20px 0 hsl(var(--accent) / 35%);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-pending {
+  background-color: hsl(var(--secondary) / 15%);
+  color: hsl(var(--secondary-dark));
+  border: 1px solid hsl(var(--secondary) / 30%);
+}
+
+.badge-approved {
+  background-color: hsl(var(--primary) / 15%);
+  color: hsl(var(--primary-dark));
+  border: 1px solid hsl(var(--primary) / 30%);
+}
+
+.badge-rejected {
+  background-color: hsl(var(--accent) / 12%);
+  color: hsl(var(--accent));
+  border: 1px solid hsl(var(--accent) / 30%);
+}
+
+/* Animations & Keyframes */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
