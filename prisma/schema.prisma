@@ -15,6 +15,9 @@ model User {
   departmentId  String?
   department    Department?       @relation(fields: [departmentId], references: [id])
   
+  universityId  String?
+  university    University?       @relation(fields: [universityId], references: [id])
+  
   // Projects uploaded by this user
   uploadedProjects Project[]      @relation("ProjectUploader")
   
@@ -26,11 +29,25 @@ model User {
 }
 
 model Department {
-  id        String    @id @default(uuid())
-  name      String    @unique // e.g., "Computer Science", "Electrical Engineering"
-  code      String    @unique // e.g., "CoSc", "ECE"
-  users     User[]
-  projects  Project[]
+  id           String      @id @default(uuid())
+  name         String      @unique // e.g., "Computer Science", "Electrical Engineering"
+  code         String      @unique // e.g., "CoSc", "ECE"
+  users        User[]
+  projects     Project[]
+  
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id])
+}
+
+model University {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  code        String       @unique // e.g., "AAU", "ASTU"
+  domains     String       // Comma-separated list of allowed domains (e.g. "aau.edu.et")
+  departments Department[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Project {

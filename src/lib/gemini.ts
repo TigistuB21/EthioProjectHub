@@ -92,3 +92,71 @@ function generateFallbackMetadata(title: string, abstract: string): ProjectMetad
     tags: extractedTags.slice(0, 5)
   };
 }
+
+interface VerificationResult {
+  valid: boolean;
+  reason: string;
+}
+
+/**
+ * Uses Gemini API to verify if the uploaded PDF matches the project details (title, department, authors).
+ */
+export async function verifyProjectDocument(
+  title: string,
+  uploaderName: string,
+  departmentName: string,
+  pdfTextSample: string
+): Promise<VerificationResult> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is not defined. Skipping AI document verification.");
+    return { valid: true, reason: "API key missing, skipped verification." };
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const prompt = `
+You are an academic verification assistant for Ethiopian Universities.
+Your task is to verify if the uploaded PDF document text matches the project metadata.
+
+Project Metadata:
+- Expected Title: ${title}
+- Expected Student Name (Uploader): ${uploaderName}
+- Expected Department: ${departmentName}
+
+Extracted text sample from the uploaded PDF file:
+\"\"\"
+${pdfTextSample}
+\"\"\"
+
+Please analyze the text sample (especially checking the cover page, titles, student names, and department mentions) and determine:
+1. Is this a valid academic graduation project/thesis document?
+2. Does the document's content (title, student name, and department) match the expected project metadata?
+   - Note: Slight title variations (e.g., casing, spelling, minor phrasing) or missing middle names are acceptable. However, completely different topics, entirely different student names, or different departments must be marked invalid.
+3. Return a JSON object with a boolean "valid" and a string "reason" explaining your decision.
+
+JSON Response Format:
+{
+  "valid": true,
+  "reason": "Clear explanation of matches or mismatches."
+}
+`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const data = JSON.parse(text);
+
+    return {
+      valid: typeof data.valid === 'boolean' ? data.valid : true,
+      reason: data.reason || "Verification completed."
+    };
+  } catch (error) {
+    console.error("Error communicating with Gemini API for verification:", error);
+    return { valid: true, reason: "Verification failed to run, fallback allowed." };
+  }
+}

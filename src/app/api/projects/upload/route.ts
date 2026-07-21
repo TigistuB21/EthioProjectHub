@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { savePdf, deletePdf } from '@/lib/storage';
-import { extractProjectMetadata } from '@/lib/gemini';
+import { extractProjectMetadata, verifyProjectDocument } from '@/lib/gemini';
+import pdf from 'pdf-parse';
 
 export async function POST(request: Request) {
   let savedFilePath: string | null = null;
@@ -52,6 +53,36 @@ export async function POST(request: Request) {
     });
     if (!department) {
       return NextResponse.json({ error: 'Selected department does not exist.' }, { status: 400 });
+    }
+
+    // 3b. Read and parse PDF for AI verification
+    let pdfTextSample = '';
+    try {
+      const buffer = Buffer.from(await pdfFile.arrayBuffer());
+      const pdfData = await pdf(buffer);
+      pdfTextSample = pdfData.text.slice(0, 8000);
+    } catch (parseError) {
+      console.error('Error parsing PDF content:', parseError);
+      return NextResponse.json({ error: 'Uploaded PDF file could not be parsed or is corrupted.' }, { status: 400 });
+    }
+
+    // 3c. Run Gemini AI Verification
+    try {
+      const verification = await verifyProjectDocument(
+        title,
+        session.fullName,
+        department.name,
+        pdfTextSample
+      );
+
+      if (!verification.valid) {
+        return NextResponse.json({
+          error: `Document verification failed: ${verification.reason}`
+        }, { status: 400 });
+      }
+    } catch (verifyError) {
+      console.error('Error during AI verification check:', verifyError);
+      // Fallback: don't block the upload if Gemini is offline/rate limited, but log it
     }
 
     // 4. Save PDF to public storage

@@ -1,11 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-
 import { getUserSession } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const universityId = searchParams.get('universityId');
+
+    const where = universityId ? { universityId } : {};
+
     const departments = await prisma.department.findMany({
+      where,
       orderBy: { name: 'asc' },
     });
     return NextResponse.json({ departments });

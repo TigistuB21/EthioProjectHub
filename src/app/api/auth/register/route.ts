@@ -5,9 +5,9 @@ import { signJWT } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, fullName, departmentId } = await request.json();
+    const { email, password, fullName, departmentId, universityId } = await request.json();
 
-    if (!email || !password || !fullName || !departmentId) {
+    if (!email || !password || !fullName || !departmentId || !universityId) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
@@ -18,6 +18,31 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+    }
+
+    // Verify university exists
+    const university = await prisma.university.findUnique({
+      where: { id: universityId },
+    });
+
+    if (!university) {
+      return NextResponse.json({ error: 'Selected university does not exist' }, { status: 400 });
+    }
+
+    // Validate email domain against university domains
+    const emailParts = email.split('@');
+    if (emailParts.length !== 2) {
+      return NextResponse.json({ error: 'Invalid email address format' }, { status: 400 });
+    }
+    const userDomain = emailParts[1].toLowerCase();
+    const allowedDomains = university.domains
+      .split(',')
+      .map((d: string) => d.trim().toLowerCase());
+
+    if (!allowedDomains.includes(userDomain)) {
+      return NextResponse.json({
+        error: `Only official university emails ending in @${university.domains} are allowed for registration.`
+      }, { status: 400 });
     }
 
     // Verify department exists
@@ -41,6 +66,7 @@ export async function POST(request: Request) {
         passwordHash,
         role: 'STUDENT',
         departmentId,
+        universityId,
       },
     });
 
@@ -51,6 +77,7 @@ export async function POST(request: Request) {
       fullName: user.fullName,
       role: user.role,
       departmentId: user.departmentId,
+      universityId: user.universityId,
     });
 
     const response = NextResponse.json({
@@ -61,6 +88,7 @@ export async function POST(request: Request) {
         fullName: user.fullName,
         role: user.role,
         departmentId: user.departmentId,
+        universityId: user.universityId,
       },
     });
 

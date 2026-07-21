@@ -10,6 +10,7 @@ export interface UserSession {
   fullName: string;
   role: string;
   departmentId: string | null;
+  universityId: string | null;
 }
 
 /**
@@ -35,6 +36,7 @@ export async function verifyJWT(token: string): Promise<UserSession | null> {
       fullName: payload.fullName as string,
       role: payload.role as string,
       departmentId: (payload.departmentId as string | null) || null,
+      universityId: (payload.universityId as string | null) || null,
     };
   } catch (error) {
     return null;
