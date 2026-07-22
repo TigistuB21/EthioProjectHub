@@ -18,6 +18,18 @@ interface Tag {
   name: string;
 }
 
+interface University {
+  id: string;
+  name: string;
+  code: string;
+}
+
+interface TagItem {
+  id: string;
+  name: string;
+  count: number;
+}
+
 interface Project {
   id: string;
   title: string;
@@ -49,31 +61,44 @@ function ProjectsContent() {
   // Search filter states synchronized with URL
   const query = searchParams.get('q') || '';
   const departmentId = searchParams.get('departmentId') || 'all';
+  const universityId = searchParams.get('universityId') || 'all';
+  const selectedTag = searchParams.get('tag') || 'all';
   const year = searchParams.get('year') || 'all';
+  const sort = searchParams.get('sort') || 'newest';
   const page = parseInt(searchParams.get('page') || '1', 10);
 
   // UI inputs states
   const [searchInput, setSearchInput] = useState(query);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [popularTags, setPopularTags] = useState<TagItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch departments on mount
+  // Fetch metadata on mount
   useEffect(() => {
-    async function fetchDepartments() {
+    async function fetchMetadata() {
       try {
-        const res = await fetch('/api/departments');
-        const data = await res.json();
-        if (data.departments) {
-          setDepartments(data.departments);
-        }
+        const [deptRes, univRes, tagRes] = await Promise.all([
+          fetch('/api/departments'),
+          fetch('/api/universities'),
+          fetch('/api/tags')
+        ]);
+        
+        const deptData = await deptRes.json();
+        const univData = await univRes.json();
+        const tagData = await tagRes.json();
+
+        if (deptData.departments) setDepartments(deptData.departments);
+        if (univData.universities) setUniversities(univData.universities);
+        if (tagData.tags) setPopularTags(tagData.tags);
       } catch (err) {
-        console.error('Failed to load departments:', err);
+        console.error('Failed to load filter metadata:', err);
       }
     }
-    fetchDepartments();
+    fetchMetadata();
   }, []);
 
   // Fetch projects whenever URL filters change
@@ -85,10 +110,13 @@ function ProjectsContent() {
         const params = new URLSearchParams();
         if (query) params.set('q', query);
         if (departmentId !== 'all') params.set('departmentId', departmentId);
+        if (universityId !== 'all') params.set('universityId', universityId);
+        if (selectedTag !== 'all') params.set('tag', selectedTag);
         if (year !== 'all') params.set('year', year);
+        if (sort !== 'newest') params.set('sort', sort);
         params.set('page', page.toString());
         params.set('limit', '9');
-        params.set('status', 'APPROVED'); // Only search approved projects for public directory
+        params.set('status', 'APPROVED');
 
         const res = await fetch(`/api/projects?${params.toString()}`);
         if (!res.ok) {
@@ -106,10 +134,18 @@ function ProjectsContent() {
     }
 
     fetchProjects();
-  }, [query, departmentId, year, page]);
+  }, [query, departmentId, universityId, selectedTag, year, sort, page]);
 
   // Handle filter changes by updating URL
-  const updateUrl = (newFilters: { q?: string; departmentId?: string; year?: string; page?: number }) => {
+  const updateUrl = (newFilters: { 
+    q?: string; 
+    departmentId?: string; 
+    universityId?: string;
+    tag?: string;
+    year?: string; 
+    sort?: string;
+    page?: number 
+  }) => {
     const params = new URLSearchParams(searchParams.toString());
     
     if (newFilters.q !== undefined) {
@@ -120,14 +156,25 @@ function ProjectsContent() {
       if (newFilters.departmentId && newFilters.departmentId !== 'all') params.set('departmentId', newFilters.departmentId);
       else params.delete('departmentId');
     }
+    if (newFilters.universityId !== undefined) {
+      if (newFilters.universityId && newFilters.universityId !== 'all') params.set('universityId', newFilters.universityId);
+      else params.delete('universityId');
+    }
+    if (newFilters.tag !== undefined) {
+      if (newFilters.tag && newFilters.tag !== 'all') params.set('tag', newFilters.tag);
+      else params.delete('tag');
+    }
     if (newFilters.year !== undefined) {
       if (newFilters.year && newFilters.year !== 'all') params.set('year', newFilters.year);
       else params.delete('year');
     }
+    if (newFilters.sort !== undefined) {
+      if (newFilters.sort && newFilters.sort !== 'newest') params.set('sort', newFilters.sort);
+      else params.delete('sort');
+    }
     if (newFilters.page !== undefined) {
       params.set('page', newFilters.page.toString());
     } else {
-      // Reset to page 1 on filter changes
       params.set('page', '1');
     }
 
@@ -144,7 +191,6 @@ function ProjectsContent() {
     router.push(pathname);
   };
 
-  // List of last 10 years for filter dropdown
   const currentYear = new Date().getFullYear();
   const academicYears = Array.from({ length: 15 }, (_, i) => currentYear - i);
 
@@ -159,7 +205,7 @@ function ProjectsContent() {
         {/* Sidebar Filters */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarTitle}>
-            <span>⚙️</span> Filters
+            <span>⚙️</span> Search & Filters
           </div>
 
           <form onSubmit={handleSearchSubmit}>
@@ -176,6 +222,23 @@ function ProjectsContent() {
                   className={styles.searchInput}
                 />
               </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label htmlFor="univ-select">University</label>
+              <select
+                id="univ-select"
+                value={universityId}
+                onChange={(e) => updateUrl({ universityId: e.target.value })}
+                className={styles.selectInput}
+              >
+                <option value="all">All Universities</option>
+                {universities.map((univ) => (
+                  <option key={univ.id} value={univ.id}>
+                    {univ.name} ({univ.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className={styles.filterGroup}>
@@ -216,12 +279,34 @@ function ProjectsContent() {
               Apply Search
             </button>
 
-            {(query || departmentId !== 'all' || year !== 'all' || searchInput) && (
+            {(query || departmentId !== 'all' || universityId !== 'all' || selectedTag !== 'all' || year !== 'all' || searchInput) && (
               <button type="button" onClick={handleReset} className={styles.resetBtn}>
                 Clear All Filters
               </button>
             )}
           </form>
+
+          {/* Popular Tag Pills */}
+          {popularTags.length > 0 && (
+            <div className={styles.tagPillsWrapper}>
+              <div className={styles.tagPillsHeader}>🏷️ Popular Tags</div>
+              <div className={styles.tagPills}>
+                {popularTags.map((t) => {
+                  const isActive = selectedTag === t.name;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => updateUrl({ tag: isActive ? 'all' : t.name })}
+                      className={`${styles.tagPill} ${isActive ? styles.tagPillActive : ''}`}
+                    >
+                      #{t.name} ({t.count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Content Section */}
@@ -236,6 +321,22 @@ function ProjectsContent() {
                   <strong>{pagination?.total || 0}</strong> projects
                 </>
               )}
+            </div>
+
+            {/* Sort Order Selector */}
+            <div className={styles.sortControls}>
+              <label htmlFor="sort-select" style={{ fontSize: '0.85rem' }}>Sort by:</label>
+              <select
+                id="sort-select"
+                value={sort}
+                onChange={(e) => updateUrl({ sort: e.target.value })}
+                className={styles.sortSelect}
+              >
+                <option value="newest">Newest Uploaded</option>
+                <option value="oldest">Oldest Uploaded</option>
+                <option value="year_desc">Academic Year (High to Low)</option>
+                <option value="year_asc">Academic Year (Low to High)</option>
+              </select>
             </div>
           </div>
 

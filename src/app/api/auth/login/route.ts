@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       fullName: user.fullName,
       role: user.role,
       departmentId: user.departmentId,
+      universityId: user.universityId,
     });
 
     const response = NextResponse.json({
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
         fullName: user.fullName,
         role: user.role,
         departmentId: user.departmentId,
+        universityId: user.universityId,
       },
     });
 

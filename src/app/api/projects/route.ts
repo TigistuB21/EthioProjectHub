@@ -7,9 +7,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
     const departmentId = searchParams.get('departmentId');
+    const universityId = searchParams.get('universityId');
+    const tag = searchParams.get('tag');
     const yearStr = searchParams.get('year');
     const statusParam = searchParams.get('status');
     const uploaderId = searchParams.get('uploaderId');
+    const sort = searchParams.get('sort') || 'newest';
     
     // Pagination parameters
     const pageStr = searchParams.get('page');
@@ -76,6 +79,26 @@ export async function GET(request: Request) {
       andConditions.push({ departmentId });
     }
 
+    // Filter by university (via department or uploader)
+    if (universityId && universityId !== 'all') {
+      andConditions.push({
+        department: {
+          universityId
+        }
+      });
+    }
+
+    // Filter by tag
+    if (tag && tag !== 'all') {
+      andConditions.push({
+        tags: {
+          some: {
+            name: { equals: tag }
+          }
+        }
+      });
+    }
+
     // Filter by year
     if (yearStr && yearStr !== 'all') {
       const year = parseInt(yearStr, 10);
@@ -94,7 +117,6 @@ export async function GET(request: Request) {
 
     // Special behavior: If advisor queries for PENDING projects, they should ideally see projects
     // from their own department. We can enforce this or keep it open.
-    // Let's filter pending/rejected projects for ADVISORs to their own department, unless they specify "all"
     if (session && session.role === 'ADVISOR' && statusFilter === 'PENDING' && !departmentId) {
       if (session.departmentId) {
         andConditions.push({ departmentId: session.departmentId });
@@ -102,6 +124,16 @@ export async function GET(request: Request) {
     }
 
     const where = andConditions.length > 0 ? { AND: andConditions } : {};
+
+    // Sort order definition
+    let orderBy: any = { createdAt: 'desc' };
+    if (sort === 'oldest') {
+      orderBy = { createdAt: 'asc' };
+    } else if (sort === 'year_desc') {
+      orderBy = { year: 'desc' };
+    } else if (sort === 'year_asc') {
+      orderBy = { year: 'asc' };
+    }
 
     // Get total count for pagination
     const total = await prisma.project.count({ where });
@@ -111,9 +143,7 @@ export async function GET(request: Request) {
       where,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: {
-        createdAt: 'desc'
-      },
+      orderBy,
       include: {
         department: {
           select: {

@@ -5,6 +5,8 @@ import { notFound, redirect } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ReviewPanel from './ReviewPanel';
+import PdfViewer from '@/components/PdfViewer';
+import ProjectChatDrawer from '@/components/ProjectChatDrawer';
 import styles from './project-detail.module.css';
 
 interface PageProps {
@@ -157,39 +159,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               ))}
             </div>
 
-            {/* PDF View & Download section */}
-            <section className={styles.pdfSection}>
-              <div className={styles.pdfAction}>
-                <h2 className={styles.sectionTitle} style={{ marginBottom: 0, border: 'none', padding: 0 }}>
-                  📄 Project Document (PDF)
-                </h2>
-                <a
-                  href={project.pdfUrl}
-                  download={`${project.title.toLowerCase().replace(/\s+/g, '_')}.pdf`}
-                  className="btn btn-secondary"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                  📥 Download PDF
-                </a>
-              </div>
-              
-              <div className={styles.pdfViewerWrapper}>
-                {/* Embed PDF directly, with a download fallback for unsupported browsers */}
-                <object
-                  data={project.pdfUrl}
-                  type="application/pdf"
-                  className={styles.pdfIframe}
-                >
-                  <div className={styles.pdfFallback}>
-                    <span style={{ fontSize: '3rem' }}>📁</span>
-                    <h3>PDF Preview Not Available</h3>
-                    <p>Your browser doesn&apos;t support inline PDF rendering.</p>
-                    <a href={project.pdfUrl} className="btn btn-primary" download>
-                      Download PDF to View
-                    </a>
-                  </div>
-                </object>
-              </div>
+            {/* Interactive PDF Reader section */}
+            <section className={styles.pdfSection} style={{ marginTop: '2rem' }}>
+              <PdfViewer pdfUrl={project.pdfUrl} title={project.title} />
             </section>
           </div>
 
@@ -245,6 +217,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             )}
           </div>
         </div>
+        <ProjectChatDrawer projectId={project.id} projectTitle={project.title} />
       </main>
       <Footer />
     </>
