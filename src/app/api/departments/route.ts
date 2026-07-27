@@ -7,12 +7,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const universityId = searchParams.get('universityId');
 
-    const where = universityId ? { universityId } : {};
+    let departments;
+    if (universityId && universityId !== 'OTHER') {
+      departments = await prisma.department.findMany({
+        where: { universityId },
+        orderBy: { name: 'asc' },
+      });
 
-    const departments = await prisma.department.findMany({
-      where,
-      orderBy: { name: 'asc' },
-    });
+      if (departments.length === 0) {
+        departments = await prisma.department.findMany({
+          distinct: ['name'],
+          orderBy: { name: 'asc' },
+        });
+      }
+    } else {
+      // If OTHER or no universityId specified, return distinct common departments across universities
+      departments = await prisma.department.findMany({
+        distinct: ['name'],
+        orderBy: { name: 'asc' },
+      });
+    }
+
     return NextResponse.json({ departments });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch departments' }, { status: 500 });

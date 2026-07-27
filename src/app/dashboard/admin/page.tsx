@@ -15,36 +15,43 @@ export default async function AdminDashboardPage() {
     redirect('/login');
   }
 
-  if (session.role !== 'ADMIN') {
+  if (session.role !== 'ADMIN' && session.role !== 'UNIVERSITY_ADMIN') {
     redirect('/dashboard/student');
   }
 
   // 2. Fetch admin user profile details
   const adminUser = await prisma.user.findUnique({
     where: { id: session.id },
-    include: { department: true }
+    include: { department: true, university: true }
   });
 
   if (!adminUser) {
     redirect('/login');
   }
 
+  const isUnivAdmin = session.role === 'UNIVERSITY_ADMIN';
+  const targetUnivId = isUnivAdmin ? adminUser.universityId : null;
+
   // 3. Fetch users, departments, and projects for management
   const [users, departments, projects] = await Promise.all([
     prisma.user.findMany({
+      where: targetUnivId ? { universityId: targetUnivId } : {},
       orderBy: { fullName: 'asc' },
       select: {
         id: true,
         fullName: true,
         email: true,
         role: true,
+        status: true,
         departmentId: true,
       }
     }),
     prisma.department.findMany({
+      where: targetUnivId ? { universityId: targetUnivId } : {},
       orderBy: { name: 'asc' }
     }),
     prisma.project.findMany({
+      where: targetUnivId ? { department: { universityId: targetUnivId } } : {},
       include: {
         department: true,
         uploader: {

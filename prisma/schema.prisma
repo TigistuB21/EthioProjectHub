@@ -1,9 +1,10 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "library"
 }
 
 model User {
@@ -11,7 +12,9 @@ model User {
   email         String            @unique
   passwordHash  String
   fullName      String
-  role          String            @default("STUDENT") // "STUDENT", "ADVISOR", "ADMIN"
+  role          String            @default("STUDENT") // "STUDENT", "ADVISOR", "UNIVERSITY_ADMIN", "ADMIN"
+  status        String            @default("ACTIVE")  // "ACTIVE", "PENDING_VERIFICATION"
+  requestedRole String?                               // "STUDENT", "ADVISOR", "UNIVERSITY_ADMIN"
   departmentId  String?
   department    Department?       @relation(fields: [departmentId], references: [id])
   
@@ -30,8 +33,8 @@ model User {
 
 model Department {
   id           String      @id @default(uuid())
-  name         String      @unique // e.g., "Computer Science", "Electrical Engineering"
-  code         String      @unique // e.g., "CoSc", "ECE"
+  name         String      // e.g., "Computer Science", "Electrical Engineering"
+  code         String      // e.g., "CoSc", "ECE"
   users        User[]
   projects     Project[]
   
@@ -57,7 +60,8 @@ model Project {
   year           Int
   pdfUrl         String            // Local path or S3 URL
   teamMembers    String            // Comma-separated list or JSON string of team members
-  status         String            @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  coAuthorEmails String?           // Comma-separated student emails for co-author linking
+  status         String            @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "REVISION_REQUESTED"
   summary        String?
 
   
