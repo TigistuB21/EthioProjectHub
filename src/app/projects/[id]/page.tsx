@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import ReviewPanel from './ReviewPanel';
 import PdfViewer from '@/components/PdfViewer';
 import ProjectChatDrawer from '@/components/ProjectChatDrawer';
+import ProjectHeaderActions from './ProjectHeaderActions';
 import styles from './project-detail.module.css';
 
 interface PageProps {
@@ -105,16 +106,29 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 <span className={styles.yearBadge}>Class of {project.year}</span>
               </div>
               
-              {/* Show Status Badge for uploader or reviewers */}
-              {(session && (project.uploaderId === session.id || session.role === 'ADVISOR' || session.role === 'ADMIN')) && (
-                <span className={`${styles.statusBadge} ${
-                  project.status === 'APPROVED' ? styles.statusApproved :
-                  project.status === 'REJECTED' ? styles.statusRejected :
-                  styles.statusPending
-                }`}>
-                  {project.status}
-                </span>
-              )}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <ProjectHeaderActions
+                  project={{
+                    id: project.id,
+                    title: project.title,
+                    year: project.year,
+                    uploaderName: project.uploader.fullName,
+                    universityName: project.department.universityId || 'Ethiopian Institution',
+                    departmentName: project.department.name
+                  }}
+                />
+
+                {/* Show Status Badge for uploader or reviewers */}
+                {(session && (project.uploaderId === session.id || session.role === 'ADVISOR' || session.role === 'ADMIN')) && (
+                  <span className={`${styles.statusBadge} ${
+                    project.status === 'APPROVED' ? styles.statusApproved :
+                    project.status === 'REJECTED' ? styles.statusRejected :
+                    styles.statusPending
+                  }`}>
+                    {project.status}
+                  </span>
+                )}
+              </div>
             </div>
 
             <h1 className={styles.title}>{project.title}</h1>
