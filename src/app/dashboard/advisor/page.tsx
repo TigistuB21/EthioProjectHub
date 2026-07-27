@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import InstitutionalAnalyticsWidget from '@/components/InstitutionalAnalyticsWidget';
 import styles from '../dashboard.module.css';
 
 export default async function AdvisorDashboardPage() {
@@ -23,10 +24,10 @@ export default async function AdvisorDashboardPage() {
     redirect('/dashboard/admin');
   }
 
-  // 2. Fetch User with Department Details
+  // 2. Fetch User with Department and University Details
   const user = await prisma.user.findUnique({
     where: { id: session.id },
-    include: { department: true }
+    include: { department: true, university: true }
   });
 
   if (!user) {
@@ -34,6 +35,8 @@ export default async function AdvisorDashboardPage() {
   }
 
   const deptId = user.departmentId;
+  const univId = user.universityId;
+  const universityName = user.university?.name || 'University';
   const departmentName = user.department?.name || 'All Departments (Unassigned)';
 
   // 3. Fetch Pending Projects in Advisor's Department
@@ -45,12 +48,12 @@ export default async function AdvisorDashboardPage() {
       })
     : [];
 
-  // 4. Fetch Reviewed/Archived Projects in Department (Approved/Rejected)
+  // 4. Fetch Reviewed/Archived Projects in Department (Approved/Rejected/Revision Requested)
   const archivedProjects = deptId
     ? await prisma.project.findMany({
         where: {
           departmentId: deptId,
-          status: { in: ['APPROVED', 'REJECTED'] }
+          status: { in: ['APPROVED', 'REJECTED', 'REVISION_REQUESTED'] }
         },
         include: { uploader: true },
         orderBy: { updatedAt: 'desc' },
@@ -77,6 +80,10 @@ export default async function AdvisorDashboardPage() {
       })
     : 0;
 
+  const repoLink = univId && deptId 
+    ? `/projects?universityId=${univId}&departmentId=${deptId}`
+    : '/projects';
+
   return (
     <>
       <Navbar />
@@ -85,11 +92,11 @@ export default async function AdvisorDashboardPage() {
         <div className={styles.header}>
           <div className={styles.titleArea}>
             <h1>Advisor Review Panel</h1>
-            <p>Department of {departmentName}</p>
+            <p>🏫 {universityName} — Department of {departmentName}</p>
           </div>
           <div className={styles.actionsArea}>
-            <Link href="/projects" className="btn btn-secondary">
-              🔍 Browse Public Repository
+            <Link href={repoLink} className="btn btn-secondary">
+              🔍 Department Repository
             </Link>
           </div>
         </div>
@@ -104,20 +111,23 @@ export default async function AdvisorDashboardPage() {
             </div>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statIcon} style={{ color: 'hsl(142 69% 45%)' }}>✅</span>
+            <span className={styles.statIcon} style={{ color: 'hsl(142 71% 45%)' }}>✅</span>
             <div className={styles.statDetails}>
               <span className={styles.statNumber}>{approvedCount}</span>
               <span className={styles.statLabel}>Approved Projects</span>
             </div>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>📊</span>
+            <span className={styles.statIcon} style={{ color: 'hsl(217 91% 60%)' }}>📚</span>
             <div className={styles.statDetails}>
               <span className={styles.statNumber}>{totalDeptProjects}</span>
-              <span className={styles.statLabel}>Total Dept Submissions</span>
+              <span className={styles.statLabel}>Total Submissions</span>
             </div>
           </div>
         </div>
+
+        {/* Institutional Research & Tag Analytics Widget */}
+        <InstitutionalAnalyticsWidget />
 
         {/* Layout Grid */}
         <div className={styles.layout}>

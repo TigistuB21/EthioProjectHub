@@ -77,14 +77,15 @@ function ProjectsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch metadata on mount
+  // Fetch metadata and current user session on mount
   useEffect(() => {
     async function fetchMetadata() {
       try {
-        const [deptRes, univRes, tagRes] = await Promise.all([
+        const [deptRes, univRes, tagRes, meRes] = await Promise.all([
           fetch('/api/departments'),
           fetch('/api/universities'),
-          fetch('/api/tags')
+          fetch('/api/tags'),
+          fetch('/api/auth/me').catch(() => null),
         ]);
         
         const deptData = await deptRes.json();
@@ -94,6 +95,24 @@ function ProjectsContent() {
         if (deptData.departments) setDepartments(deptData.departments);
         if (univData.universities) setUniversities(univData.universities);
         if (tagData.tags) setPopularTags(tagData.tags);
+
+        // Pre-select Advisor's university & department if no query params exist
+        if (meRes && meRes.ok) {
+          const meData = await meRes.json();
+          const meUser = meData.user;
+          if (meUser && meUser.role === 'ADVISOR') {
+            const hasUnivParam = searchParams.has('universityId');
+            const hasDeptParam = searchParams.has('departmentId');
+            if (!hasUnivParam && meUser.universityId) {
+              const newParams = new URLSearchParams(searchParams.toString());
+              newParams.set('universityId', meUser.universityId);
+              if (!hasDeptParam && meUser.departmentId) {
+                newParams.set('departmentId', meUser.departmentId);
+              }
+              router.replace(`${pathname}?${newParams.toString()}`);
+            }
+          }
+        }
       } catch (err) {
         console.error('Failed to load filter metadata:', err);
       }
