@@ -32,10 +32,15 @@ export default async function StudentDashboardPage() {
     redirect('/login');
   }
 
-  // 3. Fetch User's Projects
+  // 3. Fetch User's Projects and Linked Co-authored Projects
   const projects = await prisma.project.findMany({
-    where: { uploaderId: session.id },
-    include: { department: true, tags: true },
+    where: {
+      OR: [
+        { uploaderId: session.id },
+        { coAuthorEmails: { contains: session.email } }
+      ]
+    },
+    include: { department: true, tags: true, approvals: { orderBy: { createdAt: 'desc' }, take: 1 } },
     orderBy: { createdAt: 'desc' }
   });
 
@@ -43,7 +48,7 @@ export default async function StudentDashboardPage() {
   const totalUploads = projects.length;
   const approvedCount = projects.filter((p) => p.status === 'APPROVED').length;
   const pendingCount = projects.filter((p) => p.status === 'PENDING').length;
-  const rejectedCount = projects.filter((p) => p.status === 'REJECTED').length;
+  const revisionCount = projects.filter((p) => p.status === 'REVISION_REQUESTED' || p.status === 'REJECTED').length;
 
   const departmentName = user.department?.name || 'Unspecified Department';
 
@@ -87,11 +92,11 @@ export default async function StudentDashboardPage() {
               <span className={styles.statLabel}>Pending Review</span>
             </div>
           </div>
-          {rejectedCount > 0 && (
+          {revisionCount > 0 && (
             <div className={styles.statCard}>
-              <span className={styles.statIcon} style={{ color: 'hsl(0 84% 65%)' }}>❌</span>
+              <span className={styles.statIcon} style={{ color: 'hsl(0 84% 65%)' }}>📝</span>
               <div className={styles.statDetails}>
-                <span className={styles.statNumber}>{rejectedCount}</span>
+                <span className={styles.statNumber}>{revisionCount}</span>
                 <span className={styles.statLabel}>Needs Revision</span>
               </div>
             </div>
@@ -169,10 +174,10 @@ export default async function StudentDashboardPage() {
                         <td>
                           <span className={`${styles.badge} ${
                             project.status === 'APPROVED' ? styles.badgeApproved :
-                            project.status === 'REJECTED' ? styles.badgeRejected :
+                            (project.status === 'REJECTED' || project.status === 'REVISION_REQUESTED') ? styles.badgeRejected :
                             styles.badgePending
                           }`}>
-                            {project.status}
+                            {project.status === 'REVISION_REQUESTED' ? 'REVISION REQUESTED' : project.status}
                           </span>
                         </td>
                         <td>
@@ -182,10 +187,15 @@ export default async function StudentDashboardPage() {
                             day: 'numeric'
                           })}
                         </td>
-                        <td>
+                        <td style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                           <Link href={`/projects/${project.id}`} className="btn btn-secondary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }}>
                             🔍 View Details
                           </Link>
+                          {(project.status === 'REVISION_REQUESTED' || project.status === 'REJECTED') && (
+                            <Link href={`/projects/${project.id}/resubmit`} className="btn btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', backgroundColor: 'hsl(45 93% 42%)', color: '#fff' }}>
+                              📝 Resubmit Revision
+                            </Link>
+                          )}
                         </td>
                       </tr>
                     ))}

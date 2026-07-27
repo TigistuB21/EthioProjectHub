@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const departmentId = formData.get('departmentId') as string | null;
     const yearStr = formData.get('year') as string | null;
     const teamMembers = formData.get('teamMembers') as string | null;
+    const coAuthorEmails = formData.get('coAuthorEmails') as string | null;
     const pdfFile = formData.get('pdfFile') as File | null;
 
     // 3. Validation
@@ -53,6 +54,20 @@ export async function POST(request: Request) {
     });
     if (!department) {
       return NextResponse.json({ error: 'Selected department does not exist.' }, { status: 400 });
+    }
+
+    // 3a. Originality & Duplicate Check
+    const duplicateProject = await prisma.project.findFirst({
+      where: {
+        departmentId,
+        title: { equals: title.trim(), mode: 'insensitive' }
+      }
+    });
+
+    if (duplicateProject) {
+      return NextResponse.json({
+        error: 'Originality Check Failed: A project with this title has already been submitted to your department.'
+      }, { status: 400 });
     }
 
     // 3b. Read and parse PDF for AI verification
@@ -129,6 +144,7 @@ export async function POST(request: Request) {
         year,
         pdfUrl: savedFilePath,
         teamMembers: teamMembers.trim(),
+        coAuthorEmails: coAuthorEmails ? coAuthorEmails.trim() : null,
         status: 'PENDING',
         departmentId,
         uploaderId: session.id,

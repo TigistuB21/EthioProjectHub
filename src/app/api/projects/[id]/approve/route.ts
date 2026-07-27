@@ -23,8 +23,8 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const { status, feedback } = body;
 
-    if (!status || (status !== 'APPROVED' && status !== 'REJECTED')) {
-      return NextResponse.json({ error: 'Status must be either APPROVED or REJECTED.' }, { status: 400 });
+    if (!status || (status !== 'APPROVED' && status !== 'REJECTED' && status !== 'REVISION_REQUESTED')) {
+      return NextResponse.json({ error: 'Status must be APPROVED, REJECTED, or REVISION_REQUESTED.' }, { status: 400 });
     }
 
     // 3. Find the Project

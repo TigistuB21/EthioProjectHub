@@ -23,6 +23,7 @@ export default function StudentUploadPage() {
   const [departmentId, setDepartmentId] = useState('');
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [teamMembers, setTeamMembers] = useState('');
+  const [coAuthorEmails, setCoAuthorEmails] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   // UI / Fetching States
@@ -33,24 +34,27 @@ export default function StudentUploadPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // 1. Fetch departments and current user to pre-select department
+  // 1. Fetch current user and load departments scoped strictly to the student's university
   useEffect(() => {
     async function loadInitialData() {
       try {
-        // Fetch departments
-        const deptRes = await fetch('/api/departments');
-        const deptData = await deptRes.json();
-        if (deptData.departments) {
-          setDepartments(deptData.departments);
-        }
-
-        // Fetch current user details
         const meRes = await fetch('/api/auth/me');
+        let targetUnivId = '';
         if (meRes.ok) {
           const meData = await meRes.json();
+          if (meData.user?.universityId) {
+            targetUnivId = meData.user.universityId;
+          }
           if (meData.user?.departmentId) {
             setDepartmentId(meData.user.departmentId);
           }
+        }
+
+        const deptUrl = targetUnivId ? `/api/departments?universityId=${targetUnivId}` : '/api/departments';
+        const deptRes = await fetch(deptUrl);
+        const deptData = await deptRes.json();
+        if (deptData.departments) {
+          setDepartments(deptData.departments);
         }
       } catch (err) {
         console.error('Failed to load initial upload data:', err);
@@ -135,6 +139,7 @@ export default function StudentUploadPage() {
       formData.append('departmentId', departmentId);
       formData.append('year', year);
       formData.append('teamMembers', teamMembers.trim());
+      formData.append('coAuthorEmails', coAuthorEmails.trim());
       formData.append('pdfFile', pdfFile);
 
       const res = await fetch('/api/projects/upload', {
@@ -270,6 +275,20 @@ export default function StudentUploadPage() {
                     onChange={(e) => setTeamMembers(e.target.value)}
                     disabled={submitting}
                     required
+                  />
+                </div>
+
+                {/* Co-Author Student Emails */}
+                <div className={`${styles.formGroup} ${styles.formGroupFull}`}>
+                  <label htmlFor="upload-coauthors">Co-Author Student Emails (Comma separated for dashboard linking)</label>
+                  <input
+                    id="upload-coauthors"
+                    type="text"
+                    className={styles.input}
+                    placeholder="e.g. natnael@gmail.com, abel@gmail.com"
+                    value={coAuthorEmails}
+                    onChange={(e) => setCoAuthorEmails(e.target.value)}
+                    disabled={submitting}
                   />
                 </div>
 
